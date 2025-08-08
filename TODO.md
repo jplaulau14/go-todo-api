@@ -2,7 +2,7 @@
 
 - [x] Docker Compose: add PostgreSQL service with volume, healthcheck, and env defaults
 - [x] Migrations: add goose with migrations/ folder and Makefile targets (migrate up/down)
-- [ ] Repository (Postgres): implement DB-backed Repository, env flag to switch between in-memory and Postgres; add integration test using Compose
+- [x] Repository (Postgres): implement DB-backed Repository, env flag to switch between in-memory and Postgres; add integration test using Compose
 - [ ] Readiness: add /readyz that checks DB connectivity; keep /healthz as process liveness
 - [ ] Config: centralize env config (port, db url, log level, allowed origins) with validation and fail-fast on startup
 - [ ] Request IDs: middleware to generate X-Request-ID; include in logs and error responses

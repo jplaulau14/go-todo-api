@@ -13,3 +13,5 @@
 2025-08-08: Added TODO.md roadmap outlining discrete PR-sized tasks to productionize the API.
 2025-08-08: Added PostgreSQL service to docker-compose with persistent volume, env defaults, and healthcheck.
 2025-08-08: Added goose migrations with Makefile targets (migrate-up/down). Created initial todos table migration and applied successfully to local Postgres.
+2025-08-08: Implemented Postgres-backed repository and env-based repo selection (DB_DSN). Added integration test gated by TEST_DB_DSN. Tests and lints passing.
+2025-08-08: Added Makefile target `test-integration` that boots DB, runs migrations, and executes tests with TEST_DB_DSN.

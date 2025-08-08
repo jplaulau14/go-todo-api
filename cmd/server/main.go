@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -25,8 +26,21 @@ func main() {
 		_, _ = w.Write([]byte("ok"))
 	})
 
-	todoRepo := todo.NewInMemoryRepository()
-	todoHandler := todo.NewHTTPHandler(todoRepo)
+	// Select repository based on environment
+	var repo todo.Repository
+	if dsn := os.Getenv("DB_DSN"); dsn != "" {
+		db, err := sql.Open("pgx", dsn)
+		if err != nil {
+			panic(err)
+		}
+		if err := db.Ping(); err != nil {
+			panic(err)
+		}
+		repo = todo.NewPostgresRepository(db)
+	} else {
+		repo = todo.NewInMemoryRepository()
+	}
+	todoHandler := todo.NewHTTPHandler(repo)
 	todoHandler.RegisterRoutes(mux)
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
