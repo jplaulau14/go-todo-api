@@ -1,0 +1,19 @@
+# syntax=docker/dockerfile:1
+
+FROM golang:1.24-alpine
+
+WORKDIR /app
+
+RUN apk add --no-cache git bash
+
+# Install Air for live reload (dev-only)
+RUN go install github.com/air-verse/air@v1.62.0
+
+# Pre-warm module cache; code will be bind-mounted at runtime
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Default command runs Air with our config; source is mounted by docker compose
+CMD ["/go/bin/air", "-c", ".air.toml"]
+
+

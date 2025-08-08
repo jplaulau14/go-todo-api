@@ -6,3 +6,5 @@
 2025-08-08: Updated OpenAPI version to 3.1.0 to satisfy schema linter.
 2025-08-08: Enabled CORS using github.com/rs/cors to allow Swagger UI access from a different origin. Tests and lints passing.
 2025-08-08: Added support for /todos without trailing slash and tests. Formatted, vetted, and all tests passing.
+2025-08-08: Added dev Docker setup with hot reload using Air (Dockerfile.dev, docker-compose.yml, .air.toml) and Makefile targets (dev-up/dev-down). Verified container starts and watches files.
+2025-08-08: Added Swagger UI service to docker-compose, serving openapi.yaml at http://localhost:8081.

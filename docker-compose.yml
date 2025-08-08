@@ -1,0 +1,34 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: go-todo-api-dev:local
+    container_name: go-todo-api-dev
+    command: ["/go/bin/air", "-c", ".air.toml"]
+    environment:
+      - PORT=8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./:/app
+      - air-cache:/app/.air
+    working_dir: /app
+    restart: unless-stopped
+  swagger:
+    image: swaggerapi/swagger-ui
+    container_name: go-todo-api-swagger
+    environment:
+      - SWAGGER_JSON=/openapi.yaml
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./openapi.yaml:/openapi.yaml:ro
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  air-cache: {}
+
+
