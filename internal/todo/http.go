@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+
+	"github.com/jplaulau14/go-todo-api/internal/reqctx"
 )
 
 type HTTPHandler struct {
@@ -39,7 +41,7 @@ func (h *HTTPHandler) RegisterRoutes(mux *http.ServeMux) {
 			h.create(w, r)
 			return
 		default:
-			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			writeError(w, r, http.StatusMethodNotAllowed, "method not allowed")
 			return
 		}
 	})
@@ -54,7 +56,7 @@ func (h *HTTPHandler) RegisterRoutes(mux *http.ServeMux) {
 				h.create(w, r)
 				return
 			default:
-				writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+				writeError(w, r, http.StatusMethodNotAllowed, "method not allowed")
 				return
 			}
 		}
@@ -71,7 +73,7 @@ func (h *HTTPHandler) RegisterRoutes(mux *http.ServeMux) {
 			h.delete(w, r, id)
 			return
 		default:
-			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			writeError(w, r, http.StatusMethodNotAllowed, "method not allowed")
 			return
 		}
 	})
@@ -84,29 +86,30 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 }
 
 type errorResponse struct {
-	Error  string `json:"error"`
-	Status int    `json:"status"`
+	Error     string `json:"error"`
+	Status    int    `json:"status"`
+	RequestID string `json:"request_id,omitempty"`
 }
 
-func writeError(w http.ResponseWriter, status int, message string) {
-	writeJSON(w, status, errorResponse{Error: message, Status: status})
+func writeError(w http.ResponseWriter, r *http.Request, status int, message string) {
+	writeJSON(w, status, errorResponse{Error: message, Status: status, RequestID: reqctx.GetRequestID(r.Context())})
 }
 
 func (h *HTTPHandler) create(w http.ResponseWriter, r *http.Request) {
 	var req CreateTodoRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.logger.Warn("invalid json", "error", err)
-		writeError(w, http.StatusBadRequest, "invalid json")
+		h.logger.Warn("invalid json", "error", err, "request_id", reqctx.GetRequestID(r.Context()))
+		writeError(w, r, http.StatusBadRequest, "invalid json")
 		return
 	}
 	if req.Title == "" {
-		writeError(w, http.StatusBadRequest, "title is required")
+		writeError(w, r, http.StatusBadRequest, "title is required")
 		return
 	}
 	t, err := h.repo.Create(r.Context(), req.Title)
 	if err != nil {
-		h.logger.Error("could not create todo", "error", err)
-		writeError(w, http.StatusInternalServerError, "could not create")
+		h.logger.Error("could not create todo", "error", err, "request_id", reqctx.GetRequestID(r.Context()))
+		writeError(w, r, http.StatusInternalServerError, "could not create")
 		return
 	}
 	writeJSON(w, http.StatusCreated, t)
@@ -115,8 +118,8 @@ func (h *HTTPHandler) create(w http.ResponseWriter, r *http.Request) {
 func (h *HTTPHandler) list(w http.ResponseWriter, r *http.Request) {
 	items, err := h.repo.List(r.Context())
 	if err != nil {
-		h.logger.Error("could not list todos", "error", err)
-		writeError(w, http.StatusInternalServerError, "could not list")
+		h.logger.Error("could not list todos", "error", err, "request_id", reqctx.GetRequestID(r.Context()))
+		writeError(w, r, http.StatusInternalServerError, "could not list")
 		return
 	}
 	writeJSON(w, http.StatusOK, items)
@@ -126,11 +129,11 @@ func (h *HTTPHandler) get(w http.ResponseWriter, r *http.Request, id string) {
 	t, err := h.repo.Get(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
-			writeError(w, http.StatusNotFound, "todo not found")
+			writeError(w, r, http.StatusNotFound, "todo not found")
 			return
 		}
-		h.logger.Error("could not get todo", "id", id, "error", err)
-		writeError(w, http.StatusInternalServerError, "could not get")
+		h.logger.Error("could not get todo", "id", id, "error", err, "request_id", reqctx.GetRequestID(r.Context()))
+		writeError(w, r, http.StatusInternalServerError, "could not get")
 		return
 	}
 	writeJSON(w, http.StatusOK, t)
@@ -139,18 +142,18 @@ func (h *HTTPHandler) get(w http.ResponseWriter, r *http.Request, id string) {
 func (h *HTTPHandler) update(w http.ResponseWriter, r *http.Request, id string) {
 	var req UpdateTodoRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.logger.Warn("invalid json", "error", err)
-		writeError(w, http.StatusBadRequest, "invalid json")
+		h.logger.Warn("invalid json", "error", err, "request_id", reqctx.GetRequestID(r.Context()))
+		writeError(w, r, http.StatusBadRequest, "invalid json")
 		return
 	}
 	updated, err := h.repo.Update(r.Context(), id, req)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
-			writeError(w, http.StatusNotFound, "todo not found")
+			writeError(w, r, http.StatusNotFound, "todo not found")
 			return
 		}
-		h.logger.Error("could not update todo", "id", id, "error", err)
-		writeError(w, http.StatusInternalServerError, "could not update")
+		h.logger.Error("could not update todo", "id", id, "error", err, "request_id", reqctx.GetRequestID(r.Context()))
+		writeError(w, r, http.StatusInternalServerError, "could not update")
 		return
 	}
 	writeJSON(w, http.StatusOK, updated)
@@ -159,11 +162,11 @@ func (h *HTTPHandler) update(w http.ResponseWriter, r *http.Request, id string) 
 func (h *HTTPHandler) delete(w http.ResponseWriter, r *http.Request, id string) {
 	if err := h.repo.Delete(r.Context(), id); err != nil {
 		if errors.Is(err, ErrNotFound) {
-			writeError(w, http.StatusNotFound, "todo not found")
+			writeError(w, r, http.StatusNotFound, "todo not found")
 			return
 		}
-		h.logger.Error("could not delete todo", "id", id, "error", err)
-		writeError(w, http.StatusInternalServerError, "could not delete")
+		h.logger.Error("could not delete todo", "id", id, "error", err, "request_id", reqctx.GetRequestID(r.Context()))
+		writeError(w, r, http.StatusInternalServerError, "could not delete")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

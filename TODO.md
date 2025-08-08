@@ -5,7 +5,7 @@
 - [x] Repository (Postgres): implement DB-backed Repository, env flag to switch between in-memory and Postgres; add integration test using Compose
 - [x] Readiness: add /readyz that checks DB connectivity; keep /healthz as process liveness
 - [x] Config: centralize env config (port, db url, log level, allowed origins) with validation and fail-fast on startup
-- [ ] Request IDs: middleware to generate X-Request-ID; include in logs and error responses
+- [x] Request IDs: middleware to generate X-Request-ID; include in logs and error responses
 - [ ] CORS (prod): restrict AllowedOrigins based on env; keep * only in dev
 - [ ] Request validation: enforce Content-Type: application/json; use http.MaxBytesReader(1MB); json.Decoder.DisallowUnknownFields(); tests
 - [ ] Error model: standardized JSON errors {code,string,message,request_id,status}; update handlers and OpenAPI

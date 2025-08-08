@@ -85,7 +85,7 @@ func main() {
 		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodPatch, http.MethodDelete, http.MethodOptions},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: false,
-	}).Handler(recoverMiddleware(logger, mux))
+	}).Handler(recoverMiddleware(logger, requestIDMiddleware(mux)))
 
 	handler := loggingMiddleware(logger, corsHandler)
 

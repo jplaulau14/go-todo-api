@@ -5,6 +5,9 @@ import (
 	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/jplaulau14/go-todo-api/internal/reqctx"
 )
 
 type responseRecorder struct {
@@ -32,6 +35,7 @@ func loggingMiddleware(logger *slog.Logger, next http.Handler) http.Handler {
 		start := time.Now()
 		rr := &responseRecorder{ResponseWriter: w}
 		next.ServeHTTP(rr, r)
+		rid := rr.Header().Get("X-Request-ID")
 		logger.Info("request",
 			"method", r.Method,
 			"path", r.URL.Path,
@@ -39,6 +43,7 @@ func loggingMiddleware(logger *slog.Logger, next http.Handler) http.Handler {
 			"bytes", rr.size,
 			"duration_ms", time.Since(start).Milliseconds(),
 			"remote", r.RemoteAddr,
+			"request_id", rid,
 		)
 	})
 }
@@ -50,10 +55,23 @@ func recoverMiddleware(logger *slog.Logger, next http.Handler) http.Handler {
 				logger.Error("panic recovered", "error", rec)
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusInternalServerError)
-				_, _ = w.Write([]byte(`{"error":"internal server error","status":500}`))
+				rid := reqctx.GetRequestID(r.Context())
+				_, _ = w.Write([]byte(`{"error":"internal server error","status":500,"request_id":"` + rid + `"}`))
 			}
 		}()
 		next.ServeHTTP(w, r)
+	})
+}
+
+func requestIDMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rid := r.Header.Get("X-Request-ID")
+		if rid == "" {
+			rid = uuid.NewString()
+		}
+		w.Header().Set("X-Request-ID", rid)
+		ctx := reqctx.WithRequestID(r.Context(), rid)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
