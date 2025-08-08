@@ -23,6 +23,7 @@ func TestHTTP_CRUD(t *testing.T) {
 	// Create
 	body := bytes.NewBufferString(`{"title":"task1"}`)
 	req := httptest.NewRequest(http.MethodPost, "/todos/", body)
+	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	if w.Code != http.StatusCreated {
@@ -56,6 +57,7 @@ func TestHTTP_CRUD(t *testing.T) {
 	// Update
 	updateBody := bytes.NewBufferString(`{"completed":true}`)
 	req = httptest.NewRequest(http.MethodPatch, "/todos/"+created.ID, updateBody)
+	req.Header.Set("Content-Type", "application/json")
 	w = httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	if w.Code != http.StatusOK {
@@ -75,9 +77,34 @@ func TestHTTP_CreateWithoutTrailingSlash(t *testing.T) {
 	srv := setupServer()
 	body := bytes.NewBufferString(`{"title":"task2"}`)
 	req := httptest.NewRequest(http.MethodPost, "/todos", body)
+	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	if w.Code != http.StatusCreated {
 		t.Fatalf("create status without trailing slash: %d", w.Code)
+	}
+}
+
+func TestHTTP_Validation_ContentType(t *testing.T) {
+	srv := setupServer()
+	body := bytes.NewBufferString(`{"title":"task"}`)
+	req := httptest.NewRequest(http.MethodPost, "/todos", body)
+	// Missing Content-Type
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	if w.Code != http.StatusUnsupportedMediaType {
+		t.Fatalf("expected 415, got %d", w.Code)
+	}
+}
+
+func TestHTTP_Validation_UnknownFields(t *testing.T) {
+	srv := setupServer()
+	body := bytes.NewBufferString(`{"title":"t","unknown":true}`)
+	req := httptest.NewRequest(http.MethodPost, "/todos/", body)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
 	}
 }

@@ -95,9 +95,30 @@ func writeError(w http.ResponseWriter, r *http.Request, status int, message stri
 	writeJSON(w, status, errorResponse{Error: message, Status: status, RequestID: reqctx.GetRequestID(r.Context())})
 }
 
+func isJSON(r *http.Request) bool {
+	ct := r.Header.Get("Content-Type")
+	if ct == "" {
+		return false
+	}
+	// Accept application/json and application/json; charset=UTF-8
+	ct = strings.ToLower(ct)
+	return strings.HasPrefix(ct, "application/json")
+}
+
 func (h *HTTPHandler) create(w http.ResponseWriter, r *http.Request) {
+	if !isJSON(r) {
+		writeError(w, r, http.StatusUnsupportedMediaType, "content-type must be application/json")
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	var req CreateTodoRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&req); err != nil {
+		if strings.Contains(err.Error(), "request body too large") {
+			writeError(w, r, http.StatusRequestEntityTooLarge, "request body too large")
+			return
+		}
 		h.logger.Warn("invalid json", "error", err, "request_id", reqctx.GetRequestID(r.Context()))
 		writeError(w, r, http.StatusBadRequest, "invalid json")
 		return
@@ -140,8 +161,19 @@ func (h *HTTPHandler) get(w http.ResponseWriter, r *http.Request, id string) {
 }
 
 func (h *HTTPHandler) update(w http.ResponseWriter, r *http.Request, id string) {
+	if !isJSON(r) {
+		writeError(w, r, http.StatusUnsupportedMediaType, "content-type must be application/json")
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	var req UpdateTodoRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&req); err != nil {
+		if strings.Contains(err.Error(), "request body too large") {
+			writeError(w, r, http.StatusRequestEntityTooLarge, "request body too large")
+			return
+		}
 		h.logger.Warn("invalid json", "error", err, "request_id", reqctx.GetRequestID(r.Context()))
 		writeError(w, r, http.StatusBadRequest, "invalid json")
 		return
