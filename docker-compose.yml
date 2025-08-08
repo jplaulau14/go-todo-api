@@ -8,6 +8,7 @@ services:
     command: ["/go/bin/air", "-c", ".air.toml"]
     environment:
       - PORT=8080
+      - DB_DSN=host=db port=5432 user=${POSTGRES_USER:-todo} password=${POSTGRES_PASSWORD:-todo} dbname=${POSTGRES_DB:-todo} sslmode=disable
     ports:
       - "8080:8080"
     volumes:

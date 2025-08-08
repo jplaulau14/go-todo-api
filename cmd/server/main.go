@@ -17,6 +17,7 @@ import (
 
 func main() {
 	mux := http.NewServeMux()
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": "method not allowed", "status": http.StatusMethodNotAllowed})
@@ -26,22 +27,33 @@ func main() {
 		_, _ = w.Write([]byte("ok"))
 	})
 
-	// Select repository based on environment
-	var repo todo.Repository
+	var (
+		repo todo.Repository
+		db   *sql.DB
+	)
 	if dsn := os.Getenv("DB_DSN"); dsn != "" {
-		db, err := sql.Open("pgx", dsn)
+		var err error
+		db, err = sql.Open("pgx", dsn)
 		if err != nil {
-			panic(err)
+			logger.Error("db open failed", "error", err)
 		}
-		if err := db.Ping(); err != nil {
-			panic(err)
+		if db != nil {
+			if err := db.Ping(); err != nil {
+				logger.Error("db ping failed", "error", err)
+			} else {
+				repo = todo.NewPostgresRepository(db)
+			}
 		}
-		repo = todo.NewPostgresRepository(db)
 	} else {
+		repo = todo.NewInMemoryRepository()
+	}
+	if repo == nil {
 		repo = todo.NewInMemoryRepository()
 	}
 	todoHandler := todo.NewHTTPHandler(repo)
 	todoHandler.RegisterRoutes(mux)
+
+	mux.HandleFunc("/readyz", readyzHandler(db))
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusNotFound, map[string]any{"error": "route not found", "status": http.StatusNotFound})
@@ -51,8 +63,6 @@ func main() {
 	if fromEnv := os.Getenv("PORT"); fromEnv != "" {
 		addr = ":" + fromEnv
 	}
-
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	_ = todoHandler.WithLogger(logger)
 
 	corsHandler := cors.New(cors.Options{

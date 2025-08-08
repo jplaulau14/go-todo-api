@@ -15,3 +15,4 @@
 2025-08-08: Added goose migrations with Makefile targets (migrate-up/down). Created initial todos table migration and applied successfully to local Postgres.
 2025-08-08: Implemented Postgres-backed repository and env-based repo selection (DB_DSN). Added integration test gated by TEST_DB_DSN. Tests and lints passing.
 2025-08-08: Added Makefile target `test-integration` that boots DB, runs migrations, and executes tests with TEST_DB_DSN.
+2025-08-08: Added /readyz endpoint that pings DB if configured (else returns OK). Added unit test for no-DB case. All tests and lints passing.
