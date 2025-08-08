@@ -70,3 +70,14 @@ func TestHTTP_CRUD(t *testing.T) {
 		t.Fatalf("delete status: %d", w.Code)
 	}
 }
+
+func TestHTTP_CreateWithoutTrailingSlash(t *testing.T) {
+	srv := setupServer()
+	body := bytes.NewBufferString(`{"title":"task2"}`)
+	req := httptest.NewRequest(http.MethodPost, "/todos", body)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	if w.Code != http.StatusCreated {
+		t.Fatalf("create status without trailing slash: %d", w.Code)
+	}
+}

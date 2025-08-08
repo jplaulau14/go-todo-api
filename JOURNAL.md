@@ -4,3 +4,5 @@
 2025-08-08: Added Dockerfile (multi-stage, distroless) and .dockerignore. Built image locally.
 2025-08-08: Added minimal OpenAPI spec (openapi.yaml) documenting health and todo endpoints.
 2025-08-08: Updated OpenAPI version to 3.1.0 to satisfy schema linter.
+2025-08-08: Enabled CORS using github.com/rs/cors to allow Swagger UI access from a different origin. Tests and lints passing.
+2025-08-08: Added support for /todos without trailing slash and tests. Formatted, vetted, and all tests passing.

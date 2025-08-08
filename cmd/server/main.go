@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/jplaulau14/go-todo-api/internal/todo"
+	"github.com/rs/cors"
 )
 
 func main() {
@@ -34,9 +35,16 @@ func main() {
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 
+	corsHandler := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodPatch, http.MethodDelete, http.MethodOptions},
+		AllowedHeaders:   []string{"Content-Type", "Authorization"},
+		AllowCredentials: false,
+	}).Handler(mux)
+
 	srv := &http.Server{
 		Addr:              addr,
-		Handler:           mux,
+		Handler:           corsHandler,
 		ReadTimeout:       15 * time.Second,
 		ReadHeaderTimeout: 10 * time.Second,
 		WriteTimeout:      15 * time.Second,

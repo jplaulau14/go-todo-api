@@ -16,6 +16,24 @@ func NewHTTPHandler(repo Repository) *HTTPHandler {
 }
 
 func (h *HTTPHandler) RegisterRoutes(mux *http.ServeMux) {
+	// Support both /todos and /todos/
+	mux.HandleFunc("/todos", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/todos" { // let other paths fall through to /todos/
+			http.NotFound(w, r)
+			return
+		}
+		switch r.Method {
+		case http.MethodGet:
+			h.list(w, r)
+			return
+		case http.MethodPost:
+			h.create(w, r)
+			return
+		default:
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+	})
 	mux.HandleFunc("/todos/", func(w http.ResponseWriter, r *http.Request) {
 		// /todos/ -> list, create
 		// /todos/{id} -> get, update, delete
