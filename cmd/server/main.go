@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 	"net/http"
 	"os"
@@ -17,7 +18,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": "method not allowed", "status": http.StatusMethodNotAllowed})
 			return
 		}
 		w.WriteHeader(http.StatusOK)
@@ -28,30 +29,36 @@ func main() {
 	todoHandler := todo.NewHTTPHandler(todoRepo)
 	todoHandler.RegisterRoutes(mux)
 
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, http.StatusNotFound, map[string]any{"error": "route not found", "status": http.StatusNotFound})
+	})
+
 	addr := ":8080"
 	if fromEnv := os.Getenv("PORT"); fromEnv != "" {
 		addr = ":" + fromEnv
 	}
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	_ = todoHandler.WithLogger(logger)
 
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodPatch, http.MethodDelete, http.MethodOptions},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: false,
-	}).Handler(mux)
+	}).Handler(recoverMiddleware(logger, mux))
+
+	handler := loggingMiddleware(logger, corsHandler)
 
 	srv := &http.Server{
 		Addr:              addr,
-		Handler:           corsHandler,
+		Handler:           handler,
 		ReadTimeout:       15 * time.Second,
 		ReadHeaderTimeout: 10 * time.Second,
 		WriteTimeout:      15 * time.Second,
 		IdleTimeout:       60 * time.Second,
 	}
 
-	// Start server
 	errCh := make(chan error, 1)
 	go func() {
 		logger.Info("server starting", "addr", addr)
@@ -61,7 +68,6 @@ func main() {
 		close(errCh)
 	}()
 
-	// Wait for interrupt
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
@@ -79,4 +85,10 @@ func main() {
 			os.Exit(1)
 		}
 	}
+}
+
+func writeJSON(w http.ResponseWriter, status int, v any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(v)
 }
