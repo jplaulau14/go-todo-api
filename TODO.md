@@ -1,0 +1,22 @@
+# Roadmap (each item = single PR)
+
+- [ ] Docker Compose: add PostgreSQL service with volume, healthcheck, and env defaults
+- [ ] Migrations: add goose with migrations/ folder and Makefile targets (migrate up/down)
+- [ ] Repository (Postgres): implement DB-backed Repository, env flag to switch between in-memory and Postgres; add integration test using Compose
+- [ ] Readiness: add /readyz that checks DB connectivity; keep /healthz as process liveness
+- [ ] Config: centralize env config (port, db url, log level, allowed origins) with validation and fail-fast on startup
+- [ ] Request IDs: middleware to generate X-Request-ID; include in logs and error responses
+- [ ] CORS (prod): restrict AllowedOrigins based on env; keep * only in dev
+- [ ] Request validation: enforce Content-Type: application/json; use http.MaxBytesReader(1MB); json.Decoder.DisallowUnknownFields(); tests
+- [ ] Error model: standardized JSON errors {code,string,message,request_id,status}; update handlers and OpenAPI
+- [ ] Pagination: GET /todos supports limit and offset with sane defaults/caps; update OpenAPI and tests
+- [ ] Observability: Prometheus /metrics (requests, latency, in-flight, errors); optional /debug/pprof behind env flag
+- [ ] Security headers: add X-Content-Type-Options, Referrer-Policy, X-Frame-Options; tests
+- [ ] Auth: API key (or JWT) middleware; OpenAPI security scheme; tests
+- [ ] Rate limiting: per-IP token bucket with env config; tests
+- [ ] API versioning: move routes under /v1; update OpenAPI; keep deprecation note for root routes
+- [ ] Responses: add Location: /todos/{id} header on 201; optional idempotency key support for POST; tests
+- [ ] OpenAPI polish: add error schemas, examples, pagination params, tags, descriptions
+- [ ] CI: add golangci-lint to workflow; enforce min coverage threshold and upload coverage report
+- [ ] Docs: README.md with run/dev/prod instructions, Swagger usage, contribution guidelines
+- [ ] Docker (prod): add container HEALTHCHECK and basic runtime diagnostics

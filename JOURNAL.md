@@ -10,3 +10,4 @@
 2025-08-08: Added Swagger UI service to docker-compose, serving openapi.yaml at http://localhost:8081.
 2025-08-08: Implemented JSON error responses and structured logging across handlers. Added request logging and panic recovery middleware. All tests and lints passing.
 2025-08-08: Removed unnecessary comments from server, middleware, and todo package files. Formatted, vetted, and tests passing.
+2025-08-08: Added TODO.md roadmap outlining discrete PR-sized tasks to productionize the API.
