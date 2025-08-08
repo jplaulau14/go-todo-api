@@ -12,3 +12,4 @@
 2025-08-08: Removed unnecessary comments from server, middleware, and todo package files. Formatted, vetted, and tests passing.
 2025-08-08: Added TODO.md roadmap outlining discrete PR-sized tasks to productionize the API.
 2025-08-08: Added PostgreSQL service to docker-compose with persistent volume, env defaults, and healthcheck.
+2025-08-08: Added goose migrations with Makefile targets (migrate-up/down). Created initial todos table migration and applied successfully to local Postgres.
