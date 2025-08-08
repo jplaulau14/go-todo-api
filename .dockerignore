@@ -1,0 +1,11 @@
+.git
+.github
+bin/
+out/
+dist/
+.vscode/
+.idea/
+.DS_Store
+**/*.test
+**/*_test.go
+
