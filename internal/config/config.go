@@ -21,6 +21,7 @@ type Config struct {
 	DatabaseDSN    string
 	LogLevel       LogLevel
 	AllowedOrigins []string
+	Env            string
 }
 
 func Load() (Config, error) {
@@ -66,6 +67,20 @@ func Load() (Config, error) {
 			return Config{}, errors.New("ALLOWED_ORIGINS invalid")
 		}
 		cfg.AllowedOrigins = trimmed
+	}
+
+	// Environment: dev or prod (default dev)
+	env := strings.ToLower(getenv("ENV", "dev"))
+	switch env {
+	case "dev", "prod":
+		cfg.Env = env
+	default:
+		return Config{}, errors.New("invalid ENV (must be dev or prod)")
+	}
+
+	// In prod, wildcard origins are not allowed
+	if cfg.Env == "prod" && len(cfg.AllowedOrigins) == 1 && cfg.AllowedOrigins[0] == "*" {
+		return Config{}, errors.New("ALLOWED_ORIGINS cannot be * in prod")
 	}
 
 	return cfg, nil

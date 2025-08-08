@@ -6,7 +6,7 @@
 - [x] Readiness: add /readyz that checks DB connectivity; keep /healthz as process liveness
 - [x] Config: centralize env config (port, db url, log level, allowed origins) with validation and fail-fast on startup
 - [x] Request IDs: middleware to generate X-Request-ID; include in logs and error responses
-- [ ] CORS (prod): restrict AllowedOrigins based on env; keep * only in dev
+- [x] CORS (prod): restrict AllowedOrigins based on env; keep * only in dev
 - [ ] Request validation: enforce Content-Type: application/json; use http.MaxBytesReader(1MB); json.Decoder.DisallowUnknownFields(); tests
 - [ ] Error model: standardized JSON errors {code,string,message,request_id,status}; update handlers and OpenAPI
 - [ ] Pagination: GET /todos supports limit and offset with sane defaults/caps; update OpenAPI and tests
@@ -19,4 +19,3 @@
 - [ ] OpenAPI polish: add error schemas, examples, pagination params, tags, descriptions
 - [ ] CI: add golangci-lint to workflow; enforce min coverage threshold and upload coverage report
 - [ ] Docs: README.md with run/dev/prod instructions, Swagger usage, contribution guidelines
-- [ ] Docker (prod): add container HEALTHCHECK and basic runtime diagnostics

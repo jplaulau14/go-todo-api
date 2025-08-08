@@ -18,3 +18,4 @@
 2025-08-08: Added /readyz endpoint that pings DB if configured (else returns OK). Added unit test for no-DB case. All tests and lints passing.
 2025-08-08: Centralized configuration in internal/config (PORT, DB_DSN, LOG_LEVEL, ALLOWED_ORIGINS) with validation. Refactored server to use config. Added config unit tests. All tests and lints passing.
 2025-08-08: Added request ID middleware (X-Request-ID) with propagation into logs and JSON error responses. Updated handlers and recovery. All tests and lints passing.
+2025-08-08: Restricted CORS by environment via config (ENV). Disallow wildcard origins in prod. Added config tests. All tests and lints passing.
