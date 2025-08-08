@@ -8,16 +8,34 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
+	"github.com/jplaulau14/go-todo-api/internal/config"
 	"github.com/jplaulau14/go-todo-api/internal/todo"
 	"github.com/rs/cors"
 )
 
 func main() {
 	mux := http.NewServeMux()
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	cfg, err := config.Load()
+	if err != nil {
+		panic(err)
+	}
+
+	level := slog.LevelInfo
+	switch cfg.LogLevel {
+	case config.LogDebug:
+		level = slog.LevelDebug
+	case config.LogInfo:
+		level = slog.LevelInfo
+	case config.LogWarn:
+		level = slog.LevelWarn
+	case config.LogError:
+		level = slog.LevelError
+	}
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: level}))
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": "method not allowed", "status": http.StatusMethodNotAllowed})
@@ -31,7 +49,7 @@ func main() {
 		repo todo.Repository
 		db   *sql.DB
 	)
-	if dsn := os.Getenv("DB_DSN"); dsn != "" {
+	if dsn := cfg.DatabaseDSN; dsn != "" {
 		var err error
 		db, err = sql.Open("pgx", dsn)
 		if err != nil {
@@ -59,14 +77,11 @@ func main() {
 		writeJSON(w, http.StatusNotFound, map[string]any{"error": "route not found", "status": http.StatusNotFound})
 	})
 
-	addr := ":8080"
-	if fromEnv := os.Getenv("PORT"); fromEnv != "" {
-		addr = ":" + fromEnv
-	}
+	addr := ":" + strconv.Itoa(cfg.Port)
 	_ = todoHandler.WithLogger(logger)
 
 	corsHandler := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"},
+		AllowedOrigins:   cfg.AllowedOrigins,
 		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodPatch, http.MethodDelete, http.MethodOptions},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: false,
