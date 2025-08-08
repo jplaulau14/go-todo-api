@@ -20,3 +20,4 @@
 2025-08-08: Added request ID middleware (X-Request-ID) with propagation into logs and JSON error responses. Updated handlers and recovery. All tests and lints passing.
 2025-08-08: Restricted CORS by environment via config (ENV). Disallow wildcard origins in prod. Added config tests. All tests and lints passing.
 2025-08-08: Added request validation for JSON endpoints: enforce Content-Type, 1MB body limit, and unknown fields rejection. Added tests. All tests and lints passing.
+2025-08-09: Standardized JSON error model {code, string, message, request_id, status}. Updated handlers and OpenAPI responses. Tests and lints passing.

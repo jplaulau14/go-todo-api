@@ -8,7 +8,7 @@
 - [x] Request IDs: middleware to generate X-Request-ID; include in logs and error responses
 - [x] CORS (prod): restrict AllowedOrigins based on env; keep * only in dev
 - [x] Request validation: enforce Content-Type: application/json; use http.MaxBytesReader(1MB); json.Decoder.DisallowUnknownFields(); tests
-- [ ] Error model: standardized JSON errors {code,string,message,request_id,status}; update handlers and OpenAPI
+- [x] Error model: standardized JSON errors {code,string,message,request_id,status}; update handlers and OpenAPI
 - [ ] Pagination: GET /todos supports limit and offset with sane defaults/caps; update OpenAPI and tests
 - [ ] Observability: Prometheus /metrics (requests, latency, in-flight, errors); optional /debug/pprof behind env flag
 - [ ] Security headers: add X-Content-Type-Options, Referrer-Policy, X-Frame-Options; tests

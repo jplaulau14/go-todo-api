@@ -86,13 +86,22 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 }
 
 type errorResponse struct {
-	Error     string `json:"error"`
+	Code      string `json:"code"`
+	String    string `json:"string"`
+	Message   string `json:"message"`
 	Status    int    `json:"status"`
 	RequestID string `json:"request_id,omitempty"`
 }
 
 func writeError(w http.ResponseWriter, r *http.Request, status int, message string) {
-	writeJSON(w, status, errorResponse{Error: message, Status: status, RequestID: reqctx.GetRequestID(r.Context())})
+	code, str := statusToCode(status)
+	writeJSON(w, status, errorResponse{
+		Code:      code,
+		String:    str,
+		Message:   message,
+		Status:    status,
+		RequestID: reqctx.GetRequestID(r.Context()),
+	})
 }
 
 func isJSON(r *http.Request) bool {
@@ -103,6 +112,29 @@ func isJSON(r *http.Request) bool {
 	// Accept application/json and application/json; charset=UTF-8
 	ct = strings.ToLower(ct)
 	return strings.HasPrefix(ct, "application/json")
+}
+
+func statusToCode(status int) (string, string) {
+	switch status {
+	case http.StatusBadRequest:
+		return "bad_request", http.StatusText(status)
+	case http.StatusUnauthorized:
+		return "unauthorized", http.StatusText(status)
+	case http.StatusForbidden:
+		return "forbidden", http.StatusText(status)
+	case http.StatusNotFound:
+		return "not_found", http.StatusText(status)
+	case http.StatusMethodNotAllowed:
+		return "method_not_allowed", http.StatusText(status)
+	case http.StatusUnsupportedMediaType:
+		return "unsupported_media_type", http.StatusText(status)
+	case http.StatusRequestEntityTooLarge:
+		return "request_entity_too_large", http.StatusText(status)
+	case http.StatusInternalServerError:
+		return "internal", http.StatusText(status)
+	default:
+		return "error", http.StatusText(status)
+	}
 }
 
 func (h *HTTPHandler) create(w http.ResponseWriter, r *http.Request) {

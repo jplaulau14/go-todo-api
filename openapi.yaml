@@ -19,6 +19,11 @@ paths:
               schema:
                 type: array
                 items: { $ref: '#/components/schemas/Todo' }
+        '500':
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
     post:
       requestBody:
         required: true
@@ -31,6 +36,10 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Todo' }
+        '400': { description: Bad request, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '415': { description: Unsupported Media Type, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '413': { description: Payload too large, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '500': { description: Error, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
   /todos/{id}:
     get:
       parameters:
@@ -40,7 +49,8 @@ paths:
           schema: { type: string }
       responses:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Todo' } } } }
-        '404': { description: Not found }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '500': { description: Error, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
     patch:
       parameters:
         - in: path
@@ -54,7 +64,11 @@ paths:
             schema: { $ref: '#/components/schemas/UpdateTodoRequest' }
       responses:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Todo' } } } }
-        '404': { description: Not found }
+        '400': { description: Bad request, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '415': { description: Unsupported Media Type, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '413': { description: Payload too large, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '500': { description: Error, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
     delete:
       parameters:
         - in: path
@@ -63,10 +77,20 @@ paths:
           schema: { type: string }
       responses:
         '204': { description: No content }
-        '404': { description: Not found }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '500': { description: Error, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
 
 components:
   schemas:
+    Error:
+      type: object
+      properties:
+        code: { type: string }
+        string: { type: string }
+        message: { type: string }
+        status: { type: integer }
+        request_id: { type: string }
+      required: [code, string, message, status]
     Todo:
       type: object
       properties:
