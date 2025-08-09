@@ -34,7 +34,7 @@ func TestPostgresRepository_CRUD(t *testing.T) {
 	if got.ID != created.ID {
 		t.Fatalf("mismatch")
 	}
-	list, err := repo.List(ctx)
+	list, err := repo.List(ctx, 10, 0)
 	if err != nil || len(list) == 0 {
 		t.Fatalf("List: %v len=%d", err, len(list))
 	}

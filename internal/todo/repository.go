@@ -3,6 +3,7 @@ package todo
 import (
 	"context"
 	"errors"
+	"sort"
 	"sync"
 	"time"
 
@@ -16,7 +17,7 @@ var (
 type Repository interface {
 	Create(ctx context.Context, title string) (Todo, error)
 	Get(ctx context.Context, id string) (Todo, error)
-	List(ctx context.Context) ([]Todo, error)
+	List(ctx context.Context, limit, offset int) ([]Todo, error)
 	Update(ctx context.Context, id string, update UpdateTodoRequest) (Todo, error)
 	Delete(ctx context.Context, id string) error
 }
@@ -57,15 +58,31 @@ func (r *InMemoryRepository) Get(ctx context.Context, id string) (Todo, error) {
 	return t, nil
 }
 
-func (r *InMemoryRepository) List(ctx context.Context) ([]Todo, error) {
+func (r *InMemoryRepository) List(ctx context.Context, limit, offset int) ([]Todo, error) {
 	_ = ctx
 	r.mu.RLock()
-	defer r.mu.RUnlock()
-	result := make([]Todo, 0, len(r.store))
+	// Copy to slice
+	all := make([]Todo, 0, len(r.store))
 	for _, t := range r.store {
-		result = append(result, t)
+		all = append(all, t)
 	}
-	return result, nil
+	r.mu.RUnlock()
+
+	// Sort newest first by CreatedAt
+	sort.Slice(all, func(i, j int) bool { return all[i].CreatedAt.After(all[j].CreatedAt) })
+
+	// Apply offset and limit safely
+	if offset < 0 {
+		offset = 0
+	}
+	if offset >= len(all) {
+		return []Todo{}, nil
+	}
+	end := offset + limit
+	if end > len(all) {
+		end = len(all)
+	}
+	return all[offset:end], nil
 }
 
 func (r *InMemoryRepository) Update(ctx context.Context, id string, update UpdateTodoRequest) (Todo, error) {

@@ -45,9 +45,10 @@ func (r *PostgresRepository) Get(ctx context.Context, id string) (Todo, error) {
 	return t, nil
 }
 
-func (r *PostgresRepository) List(ctx context.Context) ([]Todo, error) {
+func (r *PostgresRepository) List(ctx context.Context, limit, offset int) ([]Todo, error) {
 	rows, err := r.db.QueryContext(ctx,
-		`SELECT id, title, completed, created_at, updated_at FROM todos ORDER BY created_at DESC`,
+		`SELECT id, title, completed, created_at, updated_at FROM todos ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
+		limit, offset,
 	)
 	if err != nil {
 		return nil, err

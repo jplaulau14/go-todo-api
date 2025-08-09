@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: run test lint fmt ci docker-build docker-run dev-up dev-down migrate-up migrate-down test-integration
+.PHONY: run test lint fmt ci docker-build docker-run dev-up dev-down migrate-up migrate-down test-integration seed
 
 run:
 	go run ./cmd/server
@@ -24,7 +24,10 @@ docker-run:
 	docker run --rm -p 8080:8080 -e PORT=8080 go-todo-api:local
 
 dev-up:
-	docker compose up --build
+	# Ensure DB is up first, run migrations, then start app services
+	docker compose up -d db
+	GOOSE_DRIVER=postgres GOOSE_DBSTRING='${DB_DSN}' go run github.com/pressly/goose/v3/cmd/goose@v3.24.3 -dir ./migrations up
+	docker compose up --build api swagger
 
 dev-down:
 	docker compose down -v
@@ -46,5 +49,9 @@ test-integration:
 	docker compose up -d db
 	GOOSE_DRIVER=postgres GOOSE_DBSTRING='${DB_DSN}' go run github.com/pressly/goose/v3/cmd/goose@v3.24.3 -dir ./migrations up
 	TEST_DB_DSN='${DB_DSN}' go test ./... -race -v
+
+seed:
+	GOOSE_DRIVER=postgres GOOSE_DBSTRING='${DB_DSN}' go run github.com/pressly/goose/v3/cmd/goose@v3.24.3 -dir ./migrations up
+	DB_DSN='${DB_DSN}' go run ./cmd/seed
 
 

@@ -9,7 +9,8 @@
 - [x] CORS (prod): restrict AllowedOrigins based on env; keep * only in dev
 - [x] Request validation: enforce Content-Type: application/json; use http.MaxBytesReader(1MB); json.Decoder.DisallowUnknownFields(); tests
 - [x] Error model: standardized JSON errors {code,string,message,request_id,status}; update handlers and OpenAPI
-- [ ] Pagination: GET /todos supports limit and offset with sane defaults/caps; update OpenAPI and tests
+- [x] Pagination: GET /todos supports limit and offset with sane defaults/caps; update OpenAPI and tests
+- [x] Seed: add Makefile target to seed DB with varied todos using a small program
 - [ ] Observability: Prometheus /metrics (requests, latency, in-flight, errors); optional /debug/pprof behind env flag
 - [ ] Security headers: add X-Content-Type-Options, Referrer-Policy, X-Frame-Options; tests
 - [ ] Auth: API key (or JWT) middleware; OpenAPI security scheme; tests

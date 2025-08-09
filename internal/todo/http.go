@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/jplaulau14/go-todo-api/internal/reqctx"
@@ -169,7 +170,30 @@ func (h *HTTPHandler) create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTPHandler) list(w http.ResponseWriter, r *http.Request) {
-	items, err := h.repo.List(r.Context())
+	// Parse pagination params with sane defaults and caps
+	// Defaults: limit=20, offset=0. Cap limit at 100, min 1.
+	limit := 20
+	offset := 0
+	if l := r.URL.Query().Get("limit"); l != "" {
+		if n, err := strconv.Atoi(l); err == nil {
+			limit = n
+		}
+	}
+	if o := r.URL.Query().Get("offset"); o != "" {
+		if n, err := strconv.Atoi(o); err == nil {
+			offset = n
+		}
+	}
+	if limit < 1 {
+		limit = 1
+	} else if limit > 100 {
+		limit = 100
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	items, err := h.repo.List(r.Context(), limit, offset)
 	if err != nil {
 		h.logger.Error("could not list todos", "error", err, "request_id", reqctx.GetRequestID(r.Context()))
 		writeError(w, r, http.StatusInternalServerError, "could not list")

@@ -43,7 +43,7 @@ func TestHTTP_CRUD(t *testing.T) {
 	}
 
 	// List
-	req = httptest.NewRequest(http.MethodGet, "/todos/", nil)
+	req = httptest.NewRequest(http.MethodGet, "/todos/?limit=5&offset=0", nil)
 	w = httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 	if w.Code != http.StatusOK {
@@ -70,6 +70,52 @@ func TestHTTP_CRUD(t *testing.T) {
 	srv.ServeHTTP(w, req)
 	if w.Code != http.StatusNoContent {
 		t.Fatalf("delete status: %d", w.Code)
+	}
+}
+
+func TestHTTP_ListPaginationParams(t *testing.T) {
+	srv := setupServer()
+
+	// Seed some todos
+	for i := 0; i < 5; i++ {
+		body := bytes.NewBufferString(`{"title":"t"}`)
+		req := httptest.NewRequest(http.MethodPost, "/todos/", body)
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		srv.ServeHTTP(w, req)
+		if w.Code != http.StatusCreated {
+			t.Fatalf("seed create status: %d", w.Code)
+		}
+	}
+
+	// limit=2 offset=1
+	req := httptest.NewRequest(http.MethodGet, "/todos/?limit=2&offset=1", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("list status: %d", w.Code)
+	}
+	var items []Todo
+	if err := json.NewDecoder(w.Body).Decode(&items); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if len(items) != 2 {
+		t.Fatalf("expected 2 items, got %d", len(items))
+	}
+
+	// Invalid/negative params should be clamped to defaults
+	req = httptest.NewRequest(http.MethodGet, "/todos/?limit=-1&offset=-5", nil)
+	w = httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("list status: %d", w.Code)
+	}
+	items = nil
+	if err := json.NewDecoder(w.Body).Decode(&items); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if len(items) == 0 {
+		t.Fatalf("expected some items with clamped params")
 	}
 }
 
