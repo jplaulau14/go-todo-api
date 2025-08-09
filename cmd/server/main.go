@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/jplaulau14/go-todo-api/internal/config"
+	"github.com/jplaulau14/go-todo-api/internal/reqctx"
 	"github.com/jplaulau14/go-todo-api/internal/todo"
 	"github.com/rs/cors"
 )
@@ -38,7 +39,14 @@ func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: level}))
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": "method not allowed", "status": http.StatusMethodNotAllowed})
+			status := http.StatusMethodNotAllowed
+			writeJSON(w, status, map[string]any{
+				"code":       "method_not_allowed",
+				"string":     http.StatusText(status),
+				"message":    "method not allowed",
+				"status":     status,
+				"request_id": reqctx.GetRequestID(r.Context()),
+			})
 			return
 		}
 		w.WriteHeader(http.StatusOK)
@@ -74,7 +82,14 @@ func main() {
 	mux.HandleFunc("/readyz", readyzHandler(db))
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, http.StatusNotFound, map[string]any{"error": "route not found", "status": http.StatusNotFound})
+		status := http.StatusNotFound
+		writeJSON(w, status, map[string]any{
+			"code":       "not_found",
+			"string":     http.StatusText(status),
+			"message":    "route not found",
+			"status":     status,
+			"request_id": reqctx.GetRequestID(r.Context()),
+		})
 	})
 
 	addr := ":" + strconv.Itoa(cfg.Port)
